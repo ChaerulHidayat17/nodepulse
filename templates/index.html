@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NodePulse — Server Console &amp; Hardware Telemetry</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace !important;
+        }
+        .glow-battery {
+            box-shadow: 0 0 25px -4px rgba(16, 185, 129, 0.25);
+        }
+        .glow-cpu {
+            box-shadow: 0 0 25px -4px rgba(59, 130, 246, 0.25);
+        }
+        .glow-ram {
+            box-shadow: 0 0 25px -4px rgba(168, 85, 247, 0.25);
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500 selection:text-slate-950">
+
+    <!-- TOP HEADER -->
+    <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white text-xl shadow-lg shadow-blue-500/20 font-bold shrink-0">
+                    ⚡
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white leading-none">NodePulse</h1>
+                        <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 uppercase tracking-wider">Hardware Sentinel</span>
+                    </div>
+                    <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5 font-medium flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="header-host">{{ t.hostname }}</span> · <span id="header-model">{{ t.model }}</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Quick Battery Badge & Time -->
+            <div class="flex items-center space-x-2">
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/80 text-xs font-mono">
+                    <span id="header-bat-icon">🔋</span>
+                    <span id="header-bat-val" class="font-bold text-emerald-400">{{ t.battery.capacity }}%</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN BODY -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 w-full py-6 flex-1 space-y-6">
+
+        <!-- SECTION 1: HARDWARE TELEMETRY CARDS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+            <!-- 1. BATERAI & DAYA LAPTOP -->
+            <div class="bg-slate-900/90 border border-emerald-500/30 rounded-3xl p-5 glow-battery relative overflow-hidden flex flex-col justify-between space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">🔋</span>
+                        <span class="text-xs font-extrabold text-emerald-400 uppercase tracking-wider">Baterai Laptop</span>
+                    </div>
+                    <span id="bat-status-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold {% if t.battery.ac_online %}bg-blue-500/20 text-blue-300 border border-blue-500/30{% else %}bg-emerald-500/20 text-emerald-300 border border-emerald-500/30{% endif %}">
+                        {% if t.battery.ac_online %}⚡ Charging{% else %}🔋 Baterai{% endif %}
+                    </span>
+                </div>
+
+                <div>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-3xl sm:text-4xl font-extrabold font-mono text-emerald-400" id="bat-capacity">{{ t.battery.capacity }}</span>
+                        <span class="text-lg font-bold text-emerald-500/80">%</span>
+                    </div>
+                    <div class="w-full bg-slate-950 rounded-full h-2 mt-2 overflow-hidden border border-slate-800">
+                        <div id="bat-bar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-2 rounded-full transition-all duration-500" style="width: {{ t.battery.capacity }}%"></div>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-800/80 text-[11px] text-slate-400 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span>Konsumsi Daya</span>
+                        <span class="font-mono font-bold text-slate-200" id="bat-power">{{ t.battery.power_w }} Watt</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Estimasi Sisa</span>
+                        <span class="font-mono font-bold text-emerald-300" id="bat-time">{{ t.battery.time_left }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. CPU & TEMPERATURE -->
+            <div class="bg-slate-900/90 border border-blue-500/30 rounded-3xl p-5 glow-cpu relative overflow-hidden flex flex-col justify-between space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">💻</span>
+                        <span class="text-xs font-extrabold text-blue-400 uppercase tracking-wider">Prosesor (CPU)</span>
+                    </div>
+                    <span id="cpu-temp-badge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                        🌡️ <span id="cpu-temp">{{ t.cpu.temp }}</span>°C
+                    </span>
+                </div>
+
+                <div>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-3xl sm:text-4xl font-extrabold font-mono text-white" id="cpu-percent">{{ t.cpu.percent }}</span>
+                        <span class="text-lg font-bold text-slate-400">%</span>
+                    </div>
+                    <div class="w-full bg-slate-950 rounded-full h-2 mt-2 overflow-hidden border border-slate-800">
+                        <div id="cpu-bar" class="bg-gradient-to-r from-blue-500 to-cyan-400 h-2 rounded-full transition-all duration-500" style="width: {{ t.cpu.percent }}%"></div>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-800/80 text-[11px] text-slate-400 space-y-1">
+                    <div class="flex items-center justify-between truncate">
+                        <span>Model</span>
+                        <span class="font-medium text-slate-200 truncate pl-2" id="cpu-name">{{ t.cpu.name }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Threads</span>
+                        <span class="font-mono font-bold text-slate-200" id="cpu-cores">{{ t.cpu.cores }} Logical Cores</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. RAM MEMORY -->
+            <div class="bg-slate-900/90 border border-purple-500/30 rounded-3xl p-5 glow-ram relative overflow-hidden flex flex-col justify-between space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">🧠</span>
+                        <span class="text-xs font-extrabold text-purple-400 uppercase tracking-wider">Memori RAM</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        <span id="ram-used">{{ t.memory.used_gb }}</span> / {{ t.memory.total_gb }} GB
+                    </span>
+                </div>
+
+                <div>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-3xl sm:text-4xl font-extrabold font-mono text-purple-300" id="ram-percent">{{ t.memory.percent }}</span>
+                        <span class="text-lg font-bold text-purple-400/80">%</span>
+                    </div>
+                    <div class="w-full bg-slate-950 rounded-full h-2 mt-2 overflow-hidden border border-slate-800">
+                        <div id="ram-bar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500" style="width: {{ t.memory.percent }}%"></div>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-800/80 text-[11px] text-slate-400 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span>Sisa Tersedia</span>
+                        <span class="font-mono font-bold text-emerald-400" id="ram-avail">{{ t.memory.available_gb }} GB</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Swap Terpakai</span>
+                        <span class="font-mono font-bold text-slate-300" id="ram-swap">{{ t.memory.swap_used_mb }} MB</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. SSD STORAGE (NVMe) -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 relative overflow-hidden flex flex-col justify-between space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">💾</span>
+                        <div>
+                            <span class="text-xs font-extrabold text-slate-300 uppercase tracking-wider block leading-tight">SSD NVMe</span>
+                            <span class="text-[9px] text-slate-500 font-mono block leading-tight">{{ t.disk.physical_gb }} GB Hardware</span>
+                        </div>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                        <span id="disk-used">{{ t.disk.used_gb }}</span> / <span id="disk-total">{{ t.disk.total_gb }}</span> GB
+                    </span>
+                </div>
+
+                <div>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-3xl sm:text-4xl font-extrabold font-mono text-slate-200" id="disk-percent">{{ t.disk.percent }}</span>
+                        <span class="text-lg font-bold text-slate-500">%</span>
+                    </div>
+                    <div class="w-full bg-slate-950 rounded-full h-2 mt-2 overflow-hidden border border-slate-800">
+                        <div id="disk-bar" class="bg-gradient-to-r from-amber-500 to-yellow-400 h-2 rounded-full transition-all duration-500" style="width: {{ t.disk.percent }}%"></div>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-slate-800/80 text-[11px] text-slate-400 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span>Ruang Bebas (Root)</span>
+                        <span class="font-mono font-bold text-emerald-400" id="disk-free">{{ t.disk.free_gb }} GB</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Model SSD</span>
+                        <span class="font-mono font-bold text-slate-400 truncate max-w-[150px]" title="{{ t.disk.model }}">{{ t.disk.model }}</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- SECTION 2: SYSTEM MANAGEMENT & QUICK POWER CONTROLS -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            
+            <!-- LEFT (7 COLS): ACTIVE SERVICES & NETWORK -->
+            <div class="lg:col-span-7 bg-slate-900/80 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-sm">
+                <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">🌐</span>
+                        <h3 class="font-bold text-sm text-white">Layanan &amp; Jaringan Aktif</h3>
+                    </div>
+                    <span class="text-[11px] font-mono text-slate-400 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span id="net-ip">{{ t.wifi.ip }}</span>
+                    </span>
+                </div>
+
+                <!-- Wi-Fi Status Bar -->
+                <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">📶</span>
+                        <div>
+                            <div class="text-xs font-bold text-white flex items-center gap-2">
+                                <span id="wifi-ssid">{{ t.wifi.ssid }}</span>
+                                <span class="px-2 py-0.2 rounded-full text-[9px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">Wi-Fi LAN</span>
+                            </div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">Sinyal: <b class="text-slate-300" id="wifi-signal">{{ t.wifi.signal }}%</b></div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] text-slate-500 block">Uptime Server</span>
+                        <span class="text-xs font-mono font-bold text-emerald-400" id="host-uptime">{{ t.uptime }}</span>
+                    </div>
+                </div>
+
+                <!-- Services List -->
+                <div class="space-y-2 pt-1" id="services-container">
+                    {% for s in t.services %}
+                    <div class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between hover:border-slate-700 transition">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xl">{{ s.icon }}</span>
+                            <div>
+                                <h4 class="font-bold text-xs text-white">{{ s.name }}</h4>
+                                <span class="text-[10px] font-mono text-slate-500">Port :{{ s.port }}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            {% if s.active %}
+                            <span class="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span>Running</span>
+                            </span>
+                            {% if s.url %}
+                            <a href="{{ s.url }}" target="_blank" class="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                Buka ↗
+                            </a>
+                            {% endif %}
+                            {% else %}
+                            <span class="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-slate-800 text-slate-500 border border-slate-700">
+                                Inactive
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- RIGHT (5 COLS): REMOTE POWER CONTROLS -->
+            <div class="lg:col-span-5 bg-slate-900/80 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-sm">
+                <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">🎮</span>
+                        <h3 class="font-bold text-sm text-white">Power &amp; Maintenance</h3>
+                    </div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kontrol Jarak Jauh</span>
+                </div>
+
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Karena laptop ini berjalan tanpa monitor (headless), kamu bisa mengontrol daya dan maintenance langsung lewat tombol di bawah:
+                </p>
+
+                <div class="space-y-3 pt-1">
+                    <!-- RESTART BUTTON -->
+                    <button onclick="confirmAction('reboot')" class="w-full p-4 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-left transition flex items-center justify-between group active:scale-98 cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl group-hover:rotate-180 transition-transform duration-500">🔄</span>
+                            <div>
+                                <div class="font-bold text-xs text-white">Restart Server</div>
+                                <div class="text-[11px] text-amber-300/80 mt-0.5">Muat ulang seluruh sistem operasi</div>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold text-amber-400">Reboot &rarr;</span>
+                    </button>
+
+                    <!-- SHUTDOWN BUTTON -->
+                    <button onclick="confirmAction('shutdown')" class="w-full p-4 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-left transition flex items-center justify-between group active:scale-98 cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">🛑</span>
+                            <div>
+                                <div class="font-bold text-xs text-white">Matikan Server (Shutdown)</div>
+                                <div class="text-[11px] text-rose-300/80 mt-0.5">Mematikan daya laptop secara aman</div>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold text-rose-400">Power Off &rarr;</span>
+                    </button>
+
+                    <!-- CLEAN RAM BUTTON -->
+                    <button onclick="cleanRam()" class="w-full p-3.5 rounded-2xl bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 text-left transition flex items-center justify-between active:scale-98 cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xl">🧹</span>
+                            <div>
+                                <div class="font-bold text-xs text-white">Optimasi &amp; Bersihkan Cache</div>
+                                <div class="text-[11px] text-slate-500 mt-0.5">Sinkronkan buffer RAM ke storage</div>
+                            </div>
+                        </div>
+                        <span class="text-xs text-slate-400 font-bold">Sync ↗</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- CONFIRMATION MODAL -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4 text-center">
+            <div id="modal-icon" class="text-4xl">⚠️</div>
+            <div>
+                <h3 id="modal-title" class="font-extrabold text-base text-white">Konfirmasi Tindakan</h3>
+                <p id="modal-desc" class="text-xs text-slate-400 mt-1 leading-relaxed">Apakah kamu yakin ingin me-restart server?</p>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeConfirmModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition">
+                    Batal
+                </button>
+                <button onclick="executeAction()" id="btn-execute" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-extrabold text-xs rounded-xl transition shadow-lg shadow-rose-600/30">
+                    Ya, Lanjutkan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT POLLING & ACTIONS -->
+    <script>
+        let pendingAction = null;
+
+        function confirmAction(action) {
+            pendingAction = action;
+            const modal = document.getElementById('confirm-modal');
+            const icon = document.getElementById('modal-icon');
+            const title = document.getElementById('modal-title');
+            const desc = document.getElementById('modal-desc');
+            const btn = document.getElementById('btn-execute');
+
+            if (action === 'reboot') {
+                icon.innerText = "🔄";
+                title.innerText = "Restart Server?";
+                desc.innerText = "Laptop akan me-reboot ulang. Layanan akan offline sebentar selama 30 detik.";
+                btn.className = "flex-1 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-extrabold text-xs rounded-xl transition shadow-lg shadow-amber-600/30";
+                btn.innerText = "Ya, Restart";
+            } else if (action === 'shutdown') {
+                icon.innerText = "🛑";
+                title.innerText = "Matikan Server (Shutdown)?";
+                desc.innerText = "Daya laptop akan mati total. Kamu harus menekan tombol power fisik laptop untuk menyalakannya kembali.";
+                btn.className = "flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs rounded-xl transition shadow-lg shadow-rose-600/30";
+                btn.innerText = "Ya, Matikan";
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            document.getElementById('confirm-modal').classList.remove('flex');
+            pendingAction = null;
+        }
+
+        async function executeAction() {
+            if (!pendingAction) return;
+            const endpoint = pendingAction === 'reboot' ? '/api/power/reboot' : '/api/power/shutdown';
+            
+            document.getElementById('modal-title').innerText = "Memproses...";
+            document.getElementById('modal-desc').innerText = "Perintah telah dikirim ke kernel Linux.";
+            document.getElementById('btn-execute').style.display = 'none';
+
+            try {
+                await fetch(endpoint, { method: 'POST' });
+            } catch (e) {}
+
+            setTimeout(() => {
+                alert(pendingAction === 'reboot' ? 'Perintah restart berhasil. Tunggu 30 detik lalu refresh halaman ini.' : 'Server sedang dimatikan. Lampu indikator laptop akan padam.');
+            }, 500);
+        }
+
+        async function cleanRam() {
+            const res = await fetch('/api/action/clean-ram', { method: 'POST' });
+            const data = await res.json();
+            alert(data.message || 'Cache RAM berhasil dibersihkan!');
+            updateTelemetry();
+        }
+
+        // Live Auto-Refresh every 3 seconds
+        async function updateTelemetry() {
+            try {
+                const res = await fetch('/api/telemetry');
+                if (!res.ok) return;
+                const d = await res.json();
+
+                // Battery
+                document.getElementById('header-bat-val').innerText = d.battery.capacity + '%';
+                const batIcon = d.battery.ac_online ? "⚡" : "🔋";
+                const headerBatIcon = document.getElementById('header-bat-icon');
+                if (headerBatIcon) headerBatIcon.innerText = batIcon;
+                const batBadge = document.getElementById('bat-status-badge');
+                if (batBadge) {
+                    batBadge.innerText = d.battery.ac_online ? "⚡ Charging" : "🔋 Baterai";
+                    batBadge.className = d.battery.ac_online 
+                        ? "px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                        : "px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                }
+                document.getElementById('bat-capacity').innerText = d.battery.capacity;
+                document.getElementById('bat-bar').style.width = d.battery.capacity + '%';
+                document.getElementById('bat-power').innerText = d.battery.power_w + ' Watt';
+                document.getElementById('bat-time').innerText = d.battery.time_left;
+
+                // CPU
+                document.getElementById('cpu-percent').innerText = d.cpu.percent;
+                document.getElementById('cpu-bar').style.width = d.cpu.percent + '%';
+                document.getElementById('cpu-temp').innerText = d.cpu.temp;
+
+                // Memory
+                document.getElementById('ram-used').innerText = d.memory.used_gb;
+                document.getElementById('ram-percent').innerText = d.memory.percent;
+                document.getElementById('ram-bar').style.width = d.memory.percent + '%';
+                document.getElementById('ram-avail').innerText = d.memory.available_gb + ' GB';
+                document.getElementById('ram-swap').innerText = d.memory.swap_used_mb + ' MB';
+
+                // Disk
+                document.getElementById('disk-used').innerText = d.disk.used_gb;
+                if (document.getElementById('disk-total')) document.getElementById('disk-total').innerText = d.disk.total_gb;
+                document.getElementById('disk-percent').innerText = d.disk.percent;
+                document.getElementById('disk-bar').style.width = d.disk.percent + '%';
+                document.getElementById('disk-free').innerText = d.disk.free_gb + ' GB';
+
+                // Network & Uptime
+                document.getElementById('net-ip').innerText = d.wifi.ip;
+                document.getElementById('wifi-ssid').innerText = d.wifi.ssid;
+                document.getElementById('wifi-signal').innerText = d.wifi.signal + '%';
+                document.getElementById('host-uptime').innerText = d.uptime;
+
+            } catch (e) {
+                console.error("Telemetry error:", e);
+            }
+        }
+
+        setInterval(updateTelemetry, 3000);
+    </script>
+</body>
+</html>
