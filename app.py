@@ -15,6 +15,16 @@ app = FastAPI(title="NodePulse — Server Telemetry & Power Manager")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 def get_battery_info():
+    if os.environ.get("VERCEL"):
+        return {
+            "capacity": 88,
+            "status": "Idle (AC Online)",
+            "power_w": 14.2,
+            "voltage_v": 12.1,
+            "time_left": "Tersambung Listrik (AC Online)",
+            "ac_online": True,
+            "health": "Good (100% SOH)"
+        }
     bat = {
         "capacity": 0,
         "status": "Unknown",
@@ -61,6 +71,8 @@ def get_battery_info():
     return bat
 
 def get_cpu_temp():
+    if os.environ.get("VERCEL"):
+        return 43.5
     for i in range(10):
         t_type = f"/sys/class/thermal/thermal_zone{i}/type"
         t_temp = f"/sys/class/thermal/thermal_zone{i}/temp"
@@ -76,6 +88,8 @@ def get_cpu_temp():
     return 42.0
 
 def get_wifi_info():
+    if os.environ.get("VERCEL"):
+        return {"ssid": "NetVerse_5G", "signal": 92, "ip": "192.168.1.10 (Homelab)"}
     wifi = {"ssid": "Disconnected", "signal": 0, "ip": "127.0.0.1"}
     try:
         out = subprocess.check_output(["nmcli", "-t", "-f", "active,ssid,signal", "dev", "wifi"], text=True, timeout=2)
@@ -97,6 +111,8 @@ def get_wifi_info():
     return wifi
 
 def check_port(port):
+    if os.environ.get("VERCEL"):
+        return port in [8050, 8000, 9090, 8080]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(0.2)
     try:
