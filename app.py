@@ -112,7 +112,7 @@ def get_wifi_info():
 
 def check_port(port):
     if os.environ.get("VERCEL"):
-        return port in [8050, 8000, 9090, 8080]
+        return port in [8050, 8000, 9090, 5432]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(0.2)
     try:
@@ -175,10 +175,10 @@ def get_full_telemetry():
 
     # Services
     services = [
-        {"name": "AssetDesk (IT Asset Management)", "port": 8050, "icon": "🏢", "active": check_port(8050), "url": f"http://{wifi['ip']}:8050"},
-        {"name": "DeskCraft (Provisioning)", "port": 8000, "icon": "🖥️", "active": check_port(8000), "url": f"http://{wifi['ip']}:8000"},
-        {"name": "GadgetFlow (Cuan Tracker)", "port": 8080, "icon": "📱", "active": check_port(8080), "url": f"http://{wifi['ip']}:8080"},
-        {"name": "9router AI Gateway", "port": 20128, "icon": "🧠", "active": check_port(20128), "url": f"http://{wifi['ip']}:20128"},
+        {"name": "AssetDesk (IT Asset Management)", "port": 8050, "icon": "🏢", "active": check_port(8050), "url": "https://assetdesk-itam.vercel.app" if os.environ.get("VERCEL") else f"http://{wifi['ip']}:8050"},
+        {"name": "DeskCraft (Provisioning)", "port": 8000, "icon": "🖥️", "active": check_port(8000), "url": "https://deskcraft-app.vercel.app" if os.environ.get("VERCEL") else f"http://{wifi['ip']}:8000"},
+        {"name": "Local Database Sentinel", "port": 5432, "icon": "💾", "active": True, "url": None},
+        {"name": "9router AI Gateway", "port": 20128, "icon": "🧠", "active": check_port(20128), "url": None},
         {"name": "SSH Remote Terminal", "port": 22, "icon": "🔒", "active": check_port(22), "url": None}
     ]
 
